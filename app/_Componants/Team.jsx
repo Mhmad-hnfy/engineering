@@ -5,7 +5,7 @@ import useReveal from "./useReveal";
 
 export default function Team() {
   const { doctors } = useData();
-  useReveal();
+  useReveal([doctors]);
 
   return (
     <section className="py-20 bg-white">

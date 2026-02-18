@@ -102,7 +102,7 @@ const CourseCard = ({ course, onClick, index }) => {
 const Corsus = ({ limit = null }) => {
   const { courses, setSelectedCourse } = useData();
   const router = useRouter();
-  useReveal();
+  useReveal([courses]);
 
   const handleCourseClick = (course) => {
     setSelectedCourse(course);

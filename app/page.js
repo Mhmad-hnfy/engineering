@@ -12,14 +12,11 @@ export default function Home() {
   return (
     <>
       <Hero />
-      {currentUser ? (
-        <>
-          <Team />
-          <Corsus limit={6} />
-          <What isDetailsPage={false} />
-        </>
-      ) : (
-        <div className="bg-white py-20 px-4 text-center">
+      <Team />
+      <Corsus limit={6} />
+      <What isDetailsPage={false} />
+      {!currentUser && (
+        <div className="bg-white py-20 px-4 text-center border-t border-gray-100">
           <div className="max-w-3xl mx-auto space-y-6">
             <h2 className="text-3xl md:text-4xl font-black text-gray-900">
               Unlock the Full Experience

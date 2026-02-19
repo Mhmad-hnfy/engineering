@@ -9,6 +9,7 @@ export default function AddVideo() {
     videos,
     addVideo,
     deleteVideo,
+    updateVideo,
     courses,
     fetchVideos,
     isVideosLoaded,
@@ -17,9 +18,11 @@ export default function AddVideo() {
   React.useEffect(() => {
     if (!isVideosLoaded) fetchVideos();
   }, [isVideosLoaded, fetchVideos]);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [videoSourceType, setVideoSourceType] = useState("youtube"); // 'youtube' | 'upload'
+  const [editingId, setEditingId] = useState(null);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -90,7 +93,10 @@ export default function AddVideo() {
     }
 
     setIsProcessing(true);
-    setStatus({ type: "info", message: "Preparing video data..." });
+    setStatus({
+      type: "info",
+      message: editingId ? "Updating video data..." : "Preparing video data...",
+    });
 
     try {
       const selectedCourse = courses.find((c) => c.id === formData.courseId);
@@ -122,28 +128,33 @@ export default function AddVideo() {
       }
 
       setStatus({ type: "info", message: "Saving to database..." });
-      const result = await addVideo(videoData);
+
+      let result;
+      if (editingId) {
+        result = await updateVideo(editingId, videoData);
+      } else {
+        result = await addVideo(videoData);
+      }
 
       if (result.success) {
-        setStatus({ type: "success", message: "Video added successfully!" });
+        setStatus({
+          type: "success",
+          message: editingId
+            ? "Video updated successfully!"
+            : "Video added successfully!",
+        });
         setTimeout(() => {
-          setFormData({
-            title: "",
-            youtubeVideoId: "",
-            localVideoUrl: "",
-            bannerUrl: "",
-            locked: false,
-            courseId: "",
-            pdfUrl: "",
-            pdfName: "",
-          });
+          resetForm();
           setIsModalOpen(false);
           setStatus({ type: "", message: "" });
         }, 500); // Reduced delay for better UX
       } else {
         setStatus({
           type: "error",
-          message: "Error: " + (result.message || "Failed to add video."),
+          message:
+            "Error: " +
+            (result.message ||
+              `Failed to ${editingId ? "update" : "add"} video.`),
         });
       }
     } catch (error) {
@@ -155,6 +166,38 @@ export default function AddVideo() {
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      title: "",
+      youtubeVideoId: "",
+      localVideoUrl: "",
+      bannerUrl: "",
+      locked: false,
+      courseId: "",
+      pdfUrl: "",
+      pdfName: "",
+      bannerFile: null,
+    });
+    setEditingId(null);
+  };
+
+  const handleEdit = (video) => {
+    setVideoSourceType(video.type || "youtube");
+    setFormData({
+      title: video.title,
+      youtubeVideoId: video.youtube_video_id || "",
+      localVideoUrl: video.video_url || "",
+      bannerUrl: video.banner_url || "",
+      locked: video.locked || false,
+      courseId: video.course_id || "",
+      pdfUrl: video.pdf_url || "",
+      pdfName: video.pdf_name || "",
+      bannerFile: null,
+    });
+    setEditingId(video.id);
+    setIsModalOpen(true);
   };
 
   const filteredVideos = videos.filter(
@@ -192,7 +235,10 @@ export default function AddVideo() {
           </p>
         </div>
         <button
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => {
+            resetForm();
+            setIsModalOpen(true);
+          }}
           className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition flex items-center gap-2"
         >
           <svg
@@ -283,7 +329,21 @@ export default function AddVideo() {
                         LOCKED
                       </span>
                     )}
-                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition">
+                    <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition">
+                      <button
+                        onClick={() => handleEdit(video)}
+                        className="bg-white/90 hover:bg-white text-blue-600 p-1.5 rounded-full shadow-sm backdrop-blur-sm transition"
+                        title="Edit Video"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-4 w-4"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                        </svg>
+                      </button>
                       <button
                         onClick={() => {
                           if (

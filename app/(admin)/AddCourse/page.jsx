@@ -75,7 +75,7 @@ export default function AddCourse() {
     setIsProcessing(true);
     let result;
     if (editingId) {
-      result = await updateCourse({ ...courseData, id: editingId });
+      result = await updateCourse(editingId, courseData);
     } else {
       result = await addCourse(courseData);
     }
